@@ -106,7 +106,7 @@ if (!isset($_SESSION['username'])) {
     <div class="box"><a href="../thuoc/index.php">Quản Lý Thuốc</a></div>
     <div class="box"><a href="../donthuoc/DonThuoc.php">Quản Lý Đơn Thuốc</a></div>
     <div class="box"><a href="../nhanvien/QLNhanVien.php">Quản Lý Nhân Viên</a></div>
-    <div class="box"><a href="thongke.php">Thống Kê</a></div>
+    <div class="box"><a href="../thongke/ThongKe.php">Thống Kê</a></div>
 </div>
 
 </body>

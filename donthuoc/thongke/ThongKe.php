@@ -85,14 +85,7 @@
     </style>
 </head>
 <body>
-<?php
-session_start();
-if (!isset($_SESSION['username'])) {
-    header("Location: ../index.php"); // Chuyển hướng về trang đăng nhập
-    exit();
-}
-?>
-?>
+
 <!-- Navbar -->
 <div class="navbar">
     <div class="title">Quản Lý Phòng Khám Nhi</div>
@@ -101,12 +94,9 @@ if (!isset($_SESSION['username'])) {
 
 <!-- Main Content with Management Boxes -->
 <div class="container">
-    
-    <div class="box"><a href="quanly_khambenh.php">Quản Lý Khám Bệnh</a></div>
-    <div class="box"><a href="../thuoc/index.php">Quản Lý Thuốc</a></div>
-    <div class="box"><a href="../donthuoc/DonThuoc.php">Quản Lý Đơn Thuốc</a></div>
-    <div class="box"><a href="../nhanvien/QLNhanVien.php">Quản Lý Nhân Viên</a></div>
-    <div class="box"><a href="../thongke/ThongKe.php">Thống Kê</a></div>
+    <div class="box"><a href="./view_doanhthutheothang.php">View Thống Kê</a></div>
+    <div class="box"><a href="./thutuc_doanhthutheonam.php">Thủ Tục Thống Kê</a></div>
+    <div class="box"><a href="./ham_tongtienthuoc.php">Hàm Thống Kê</a></div>
 </div>
 
 </body>
