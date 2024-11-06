@@ -1,3 +1,74 @@
+<?php
+include '../Database/DBConnection.php';
+
+$searchConditions = [];
+$searchParams = [];
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Tìm kiếm thuốc
+    if (!empty($_POST['MaThuoc'])) {
+        $searchConditions[] = "Thuoc.MaThuoc = :MaThuoc";
+        $searchParams[':MaThuoc'] = $_POST['MaThuoc'];
+    }
+    if (!empty($_POST['TenLoaiThuoc'])) {
+        $searchConditions[] = "LoaiThuoc.TenLoaiThuoc LIKE :TenLoaiThuoc";
+        $searchParams[':TenLoaiThuoc'] = "%" . $_POST['TenLoaiThuoc'] . "%";
+    }
+    if (!empty($_POST['TenNCC'])) {
+        $searchConditions[] = "NhaCungCap.TenNCC LIKE :TenNCC";
+        $searchParams[':TenNCC'] = "%" . $_POST['TenNCC'] . "%";
+    }
+
+    try {
+        $db = new DBConnection();
+        $pdo = $db->connect();
+
+        if ($pdo) {
+            $sql = "SELECT Thuoc.MaThuoc, Thuoc.TenThuoc, LoaiThuoc.TenLoaiThuoc, NhaCungCap.TenNCC, Thuoc.GiaThuoc, Thuoc.SoLuongThuocTrongKho 
+                    FROM Thuoc
+                    INNER JOIN LoaiThuoc ON Thuoc.MaLoaiThuoc = LoaiThuoc.MaLoaiThuoc
+                    INNER JOIN NhaCungCap ON Thuoc.MaNCC = NhaCungCap.MaNCC";
+
+            if (!empty($searchConditions)) {
+                $sql .= " WHERE " . implode(" AND ", $searchConditions);
+            }
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($searchParams as $param => $value) {
+                $stmt->bindValue($param, $value);
+            }
+            $stmt->execute();
+            $thuocData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            throw new Exception("Không thể kết nối đến cơ sở dữ liệu.");
+        }
+    } catch (Exception $e) {
+        echo "Lỗi: " . $e->getMessage();
+    }
+} else {
+    // Lấy tất cả dữ liệu thuốc khi không tìm kiếm
+    try {
+        $db = new DBConnection();
+        $pdo = $db->connect();
+
+        $sql = "SELECT Thuoc.MaThuoc, Thuoc.TenThuoc, LoaiThuoc.TenLoaiThuoc, NhaCungCap.TenNCC, Thuoc.GiaThuoc, Thuoc.SoLuongThuocTrongKho 
+                FROM Thuoc
+                INNER JOIN LoaiThuoc ON Thuoc.MaLoaiThuoc = LoaiThuoc.MaLoaiThuoc
+                INNER JOIN NhaCungCap ON Thuoc.MaNCC = NhaCungCap.MaNCC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $thuocData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        echo "Lỗi: " . $e->getMessage();
+    }
+}
+
+// Xử lí xoá
+
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -5,99 +76,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý thuốc</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="css/style_login.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #c7dcff;
-            border-radius: 8px;
-        }
-
-
-        .form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            background-color: #96b5d7;
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .form label {
-            width: 100%;
-            font-weight: bold;
-        }
-
-        .form input[type="text"],
-        .form input[type="date"] {
-            width: 100%;
-            padding: 8px;
-            border: none;
-            border-radius: 5px;
-            background-color: #eef7ff;
-        }
-
-        .form-group {
-            flex: 1 1 calc(33.333% - 10px);
-        }
-
-        .form-icons {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-left: auto;
-        }
-
-        .form-icons .btn {
-            background-color: #4a90e2;
-            color: white;
-            border-radius: 5px;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .form-icons .btn .bi {
-            font-size: 20px;
-        }
-
-        .table-container {
-            background-color: #96b5d7;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-
-        th, td {
-            padding: 12px;
-            font-size: 16px;
-            color: #333;
-            border-top: 1px solid #dee2e6;
-        }
-
-        th {
-            font-weight: bold;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" />
 </head>
 
 <body>
@@ -112,69 +92,51 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
                         <li class="nav-item">
-                            <a class="nav-link active fw-bold" href="index.php">Thuốc</a>
+                            <a class="nav-link" href="../home/home.php">Home</a>
                         </li>
-
                         <li class="nav-item">
-                            <a class="nav-link" href="indexLoaiThuoc.php">Loại thuốc</a>
+                            <a class="nav-link active fw-bold" href="../thuoc/index.php">Thuốc</a>
                         </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="indexNCC.php">Nhà cung cấp</a>
-                        </li>
-
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
 
-    <main>
+    <main class="my-4">
         <div class="container">
-            <div class="header">
-                <a href="" class=""><i class="bi bi-house"></i></a> <!-- Biểu tượng Home từ Bootstrap Icons -->
-                
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Quản lý thuốc</h1>
+                <a href="addThuoc.php" type="button" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm thuốc</a>
             </div>
 
-            <div class="form">
-                <div class="form-group">
-                    <label for="MaThuoc" >Mã thuốc</label>
-                    <input type="text" id="MaThuoc" placeholder="Mã thuốc" class="">
+            <!-- Form Tìm kiếm -->
+            <form method="POST" action="" class="mb-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="MaThuoc" class="form-label">Mã thuốc</label>
+                        <input type="text" id="MaThuoc" name="MaThuoc" class="form-control" placeholder="Mã thuốc">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="TenLoaiThuoc" class="form-label">Tên loại thuốc</label>
+                        <input type="text" id="TenLoaiThuoc" name="TenLoaiThuoc" class="form-control" placeholder="Tên loại thuốc">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="TenNCC" class="form-label">Nhà cung cấp</label>
+                        <input type="text" id="TenNCC" name="TenNCC" class="form-control" placeholder="Nhà cung cấp">
+                    </div>
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-primary mt-3"><i class="fa fa-search"></i> Tìm kiếm</button>
+                    </div>
                 </div>
+            </form>
 
-                <div class="form-group">
-                    <label for="TenLoaiThuoc">Tên loại thuốc</label>
-                    <input type="text" id="TenLoaiThuoc" placeholder="Tên Loại thuốc">
-                </div>
-
-                <div class="form-group">
-                    <label for="TenNCC">Nhà cung cấp</label>
-                    <input type="text" id="TenNCC" placeholder="Nhà cung cấp">
-                </div>
-
-                <div class="form-group">
-                    <label for="GiaThuoc">Giá thuốc</label>
-                    <input type="text" id="GiaThuoc" placeholder="Giá thuốc">
-                </div>
-
-                <div class="form-group">
-                    <label for="SoLuongThuocTrongKho">Số lượng thuốc trong kho</label>
-                    <input type="text" id="SoLuongThuocTrongKho" placeholder="Số lượng thuốc trong kho">
-                </div>
-                
-                <div class="form-icons d-flex gap-2">
-                    <a href="" class="btn"><i class="fa fa-plus-circle"></i></a> <!-- Biểu tượng thêm dữ liệu -->
-                    <button class="btn"><i class="fa fa-pencil"></i></button>
-                    <button class="btn"><i class="fa fa-trash"></i></button> <!-- Biểu tượng xóa dữ liệu -->
-                    <button class="btn"><i class="fa fa-search"></i></button> <!-- Biểu tượng tìm kiếm -->
-                </div>
-            </div>
-
-            <div class="table-container">
-                <table class="table">
-                    <thead>
+            <!-- Bảng dữ liệu -->
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col">Mã thuốc</th>
@@ -183,19 +145,76 @@
                             <th scope="col">Tên nhà cung cấp</th>
                             <th scope="col">Giá thuốc</th>
                             <th scope="col">Số lượng thuốc trong kho</th>
+                            <th scope="col">Hành động</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Dữ liệu sẽ được thêm vào đây -->
+                        <?php if (isset($thuocData) && count($thuocData) > 0): ?>
+                            <?php foreach ($thuocData as $index => $row): ?>
+                                <tr>
+                                    <td><?= $index + 1 ?></td>
+                                    <td><?= htmlspecialchars($row['MaThuoc']) ?></td>
+                                    <td><?= htmlspecialchars($row['TenThuoc']) ?></td>
+                                    <td><?= htmlspecialchars($row['TenLoaiThuoc']) ?></td>
+                                    <td><?= htmlspecialchars($row['TenNCC']) ?></td>
+                                    <td><?= htmlspecialchars($row['GiaThuoc']) ?></td>
+                                    <td><?= htmlspecialchars($row['SoLuongThuocTrongKho']) ?></td>
+                                    <td>
+                                    <a href="editThuoc.php?MaThuoc=<?= htmlspecialchars($row['MaThuoc']) ?>" class="btn btn-warning">Sửa</a>
+                                        <button type="button" class="btn btn-danger btn-sm delete-btn" data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                            data-id="<?= $row['MaThuoc'] ?>">Xóa</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="8" class="text-center">Không có dữ liệu thuốc.</td>
+                            </tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Modal Thêm/Sửa -->
+    
 
-    <!-- Link Bootstrap JS (Optional) -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Modal Xóa -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Xóa thuốc</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc muốn xóa thuốc này không?</p>
+            </div>
+            <div class="modal-footer">
+                <!-- Chuyển hướng đến deleteThuoc.php khi người dùng xác nhận xóa -->
+                <form method="POST" action="deleteThuoc.php">
+                    <input type="hidden" name="delete_id" id="delete_id">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Không</button>
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lấy dữ liệu thuốc để xóa
+    const deleteBtns = document.querySelectorAll('.delete-btn');
+    deleteBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const deleteId = document.getElementById('delete_id');
+            deleteId.value = this.getAttribute('data-id');
+        });
+    });
+</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
