@@ -1,209 +1,227 @@
+<?php
+session_start();
+
+// Kiểm tra xem người dùng đã đăng nhập chưa
+if (!isset($_SESSION['username'])) {
+    header("Location: ../index.php");
+    exit();
+}
+
+// Kết nối cơ sở dữ liệu
+require_once '../Database/DBConnection.php';
+
+try {
+    $db = new DBConnection();
+    $conn = $db->connect();
+
+    $searchQuery = "";
+    $params = [];
+
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search'])) {
+        $maNhanVien = trim($_POST['ma-nhan-vien'] ?? '');
+        $hoTen = trim($_POST['ho-ten'] ?? '');
+        $thoiGian = trim($_POST['thoi-gian'] ?? '');
+
+        $searchQuery = " WHERE 1=1";
+        if (!empty($maNhanVien)) {
+            $searchQuery .= " AND ln.MaNhanVien = :maNhanVien";
+            $params[':maNhanVien'] = $maNhanVien;
+        }
+        if (!empty($hoTen)) {
+            $searchQuery .= " AND nv.HoTen LIKE :hoTen";
+            $params[':hoTen'] = "%$hoTen%";
+        }
+        if (!empty($thoiGian)) {
+            $month = date('m', strtotime($thoiGian));
+            $year = date('Y', strtotime($thoiGian));
+            $searchQuery .= " AND ln.Thang = :month AND ln.Nam = :year";
+            $params[':month'] = $month;
+            $params[':year'] = $year;
+        }
+    }
+
+    $sql = "
+        SELECT 
+            ln.MaNhanVien, 
+            nv.HoTen, 
+            ln.Thang, 
+            ln.Nam, 
+            nv.MucLuong, 
+            ln.SoNgayCong, 
+            nv.PhuCap,
+            (nv.MucLuong * ln.SoNgayCong + nv.PhuCap) AS Tong
+        FROM 
+            LuongNhanVien ln
+        INNER JOIN 
+            NhanVien nv ON ln.MaNhanVien = nv.MaNhanVien
+        $searchQuery
+    ";
+
+    $stmt = $conn->prepare($sql);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+    $stmt->execute();
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $errorMessage = "Lỗi kết nối: " . $e->getMessage();
+    echo "<script>alert('$errorMessage');</script>";
+}
+
+if (isset($_POST['delete'])) {
+    $maNhanVienXoa = $_POST['ma-nhan-vien-xoa'];
+    $sqlDelete = "DELETE FROM LuongNhanVien WHERE MaNhanVien = :maNhanVien";
+    $stmtDelete = $conn->prepare($sqlDelete);
+    $stmtDelete->bindValue(':maNhanVien', $maNhanVienXoa);
+    $stmtDelete->execute();
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+if (isset($_POST['edit'])) {
+    $maNhanVienSua = $_POST['ma-nhan-vien-sua'];
+    $soNgayCong = $_POST['so-ngay-cong-sua'];
+    $thangSua = $_POST['thang-sua'];
+    $namSua = $_POST['nam-sua'];
+
+    if (is_numeric($soNgayCong) && $soNgayCong >= 0) {
+        $sqlUpdate = "UPDATE LuongNhanVien SET SoNgayCong = :soNgayCong WHERE MaNhanVien = :maNhanVien AND Thang = :thang AND Nam = :nam";
+        $stmtUpdate = $conn->prepare($sqlUpdate);
+        $stmtUpdate->bindValue(':soNgayCong', $soNgayCong);
+        $stmtUpdate->bindValue(':maNhanVien', $maNhanVienSua);
+        $stmtUpdate->bindValue(':thang', $thangSua);
+        $stmtUpdate->bindValue(':nam', $namSua);
+
+        if ($stmtUpdate->execute()) {
+            echo "<script>alert('Cập nhật số ngày công thành công!');</script>";
+        } else {
+            echo "<script>alert('Lỗi khi cập nhật số ngày công!');</script>";
+        }
+    } else {
+        echo "<script>alert('Số ngày công không hợp lệ!');</script>";
+    }
+
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit();
+}
+
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Lương nhân viên</title>
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-    <!-- <link href="{{ asset('css/bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">  -->
-    <link href="{{ asset('css/bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <title>Quản Lý Lương Nhân Viên</title>
+
+    <!-- Bootstrap CSS from CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-
-    <script src="{{ asset('js/jquery-3.5.1.min.js') }}"></script>
-    <script src="{{ asset('js/popper.min.js') }}"></script>
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f0f8ff;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            background-color: #cdeaff;
-            padding: 20px;
-            border-radius: 8px;
-            height: 100vh;
-        }
-
-        header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .icon-button {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            font-size: 1.5em;
-            color: #333;
-            margin-right: 10px;
-        }
-
-        .icon-button:focus {
-            outline: none;
-        }
-
-        .icon-button:hover {
-            color: #0056b3;
-        }
-
-        header h1 {
-            font-size: 24px;
-            color: #333;
-        }
-
-        .form-section {
-            background-color: #a0cfee;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 10px;
-        }
-
-        .form-row label {
-            width: 120px;
-            font-weight: bold;
-        }
-
-        .form-row input {
-            flex: 1;
-            padding: 5px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background-color: #e0f7ff;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .actions button {
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            font-size: 1.8em;
-            color: #333;
-            margin-right: 10px;
-        }
-
-        .table-section {
-            background-color: #a0cfee;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-
-        }
-
-
-        table th,
-        table td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #ccc;
-            word-wrap: break-word;
-            
-        }
-
-        table th {
-            font-weight: bold;
-            border-bottom: none;
-        }
-    </style>
+</head>
 
 <body>
-    <div class="container">
-        
-        <header>
-            
-            <div class="logo">
-                <button class="icon-button">
-                    <i class="bi bi-house-door" aria-label="Home"></i>
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <header>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary shadow p-3 mb-4 bg-white rounded">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center text-primary" href="../home/home.php">
+                    <i class="bi bi-house-door me-2"></i>
+                    Trang Chủ
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
                 </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.php">Quản Lý Nhân Viên</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active fw-bold" href="indexLoaiThuoc.php">Quản Lý Lương</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="account/account_management.php">Quản Lý Tài Khoản</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
+        </nav>
+    </header>
 
-            <h1>LƯƠNG NHÂN VIÊN</h1>
-
-        </header>
-
-        <section class="form-section">
-            <div class="form-row">
-                <label>Mã nhân viên</label>
-                <input type="text">
-                <label>Họ tên</label>
-                <input type="text">
-                <label>Thời gian (tháng/năm)</label>
-                <input type="month">
-                
+    <!-- Search Section -->
+    <section class="mb-4 p-4 bg-light rounded shadow-sm">
+        <form method="POST" class="row g-3">
+            <div class="col-md-4">
+                <label for="ma-nhan-vien" class="form-label">Mã Nhân Viên</label>
+                <input type="text" class="form-control" id="ma-nhan-vien" name="ma-nhan-vien" value="<?= htmlspecialchars($_POST['ma-nhan-vien'] ?? '') ?>">
             </div>
-            <div class="form-row">
-                <label>Ngày sinh</label>
-                <input type="date">
-                <label>Số điện thoại</label>
-                <input type="text">
-                <label>Chức vụ</label>
-                <input type="text">
+            <div class="col-md-4">
+                <label for="ho-ten" class="form-label">Họ Tên</label>
+                <input type="text" class="form-control" id="ho-ten" name="ho-ten" value="<?= htmlspecialchars($_POST['ho-ten'] ?? '') ?>">
             </div>
-            <div class="form-row">
-                <label>Số ngày công</label>
-                <input type="text">
-                <label>Mức lương</label>
-                <input type="text">
-                <label>Phụ cấp</label>
-                <input type="text">
+            <div class="col-md-4">
+                <label for="thoi-gian" class="form-label">Thời Gian (tháng/năm)</label>
+                <input type="month" class="form-control" id="thoi-gian" name="thoi-gian" value="<?= htmlspecialchars($_POST['thoi-gian'] ?? '') ?>">
             </div>
-            <div class="actions">
-                <button><i class="bi bi-trash3" alt="Edit"></i></button>
-                <button><i class="bi bi-pencil-square" alt="Edit"></i></button>
-                <button><i class="bi bi-search" alt="Search"> </i></button>
-                <button><i class="bi bi-printer" alt="Print"> </i></button>
-
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" name="search" class="btn btn-primary"><i class="bi bi-search"></i> Tìm Kiếm</button>
             </div>
-        </section>
-
-        <section class="table-section">
-            <table>
-                <thead>
+        </form>
+    </section>
+     <!-- Table section -->
+     <section>
+            <table class="table table-bordered table-striped w-100">
+                <thead class="table-light">
                     <tr>
-                        <th>Mã nhân viên</th>
-                        <th>Họ tên</th>
-                        <th>Thời gian (tháng/năm)</th>
-                        <th>Mức lương</th>
-                        <th>Số ngày công</th>
-                        <th>Phụ cấp</th>
-                        <th>Phạt</th>
-                        <th>Tổng</th>
+                        <th>Mã Nhân Viên</th>
+                        <th>Họ Tên</th>
+                        <th>Thời Gian (tháng/năm)</th>
+                        <th>Lương Cơ Bản</th>
+                        <th>Số Ngày Công</th>
+                        <th>Phụ Cấp</th>
+                        <th>Tổng Lương</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    
+                    <?php foreach ($results as $row): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['MaNhanVien']) ?></td>
+                            <td><?= htmlspecialchars($row['HoTen']) ?></td>
+                            <td><?= htmlspecialchars($row['Thang']) . "/" . htmlspecialchars($row['Nam']) ?></td>
+                            <td><?= htmlspecialchars($row['MucLuong']) ?></td>
+                            <td><?= htmlspecialchars($row['SoNgayCong']) ?></td>
+                            <td><?= htmlspecialchars($row['PhuCap']) ?></td>
+                            <td><?= htmlspecialchars($row['Tong']) ?></td>
+                            <td class="d-flex">
+                                <form method="POST" class="d-flex align-items-center">
+                                    <input type="hidden" name="ma-nhan-vien-sua" value="<?= htmlspecialchars($row['MaNhanVien']) ?>">
+                                    <input type="number" style="width:70px" name="so-ngay-cong-sua" value="<?= htmlspecialchars($row['SoNgayCong']) ?>" min="0" required class="form-control me-2">
+                                    <input type="hidden" name="thang-sua" value="<?= htmlspecialchars($row['Thang']) ?>">
+                                    <input type="hidden" name="nam-sua" value="<?= htmlspecialchars($row['Nam']) ?>">
+                                    <button type="submit" name="edit" class="btn btn-warning btn-sm me-2"><i class="bi bi-pencil"></i> Sửa</button>
+                                </form>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="ma-nhan-vien-xoa" value="<?= htmlspecialchars($row['MaNhanVien']) ?>">
+                                    <button type="submit" name="delete" class="btn btn-danger btn-sm" onclick="return confirm('Bạn có chắc chắn muốn xóa?')"><i class="bi bi-trash"></i> Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </section>
     </div>
+</div>
+
+
+       
+
+    <!-- Bootstrap JS from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

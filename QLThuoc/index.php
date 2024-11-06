@@ -58,7 +58,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #4CAF50;
+            background-color: yellowgreen;
             color: white;
             font-size: 18px;
             text-align: center;
@@ -82,6 +82,16 @@
             justify-content: center;
             font-weight: bold;
         }
+        .navbar .btn-succes {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -96,16 +106,18 @@ if (!isset($_SESSION['username'])) {
 <!-- Navbar -->
 <div class="navbar">
     <div class="title">Quản Lý Phòng Khám Nhi</div>
+    <div>
+    <button class="btn-succes" onclick="window.location.href='../home/home.php'">Quay lại</button>
     <button class="logout-btn" onclick="window.location.href='../logout.php'">Đăng Xuất</button>
+    </div>
 </div>
 
 <!-- Main Content with Management Boxes -->
 <div class="container">
     
-    <div class="box"><a href="../khambenh/benhnhan/benhnhan.php">Quản lý Bệnh nhân và Khám bệnh</a></div>
-    <div class="box"><a href="../QLThuoc/index.php">Quản lý Thuốc và Đơn thuốc</a></div>
-    <div class="box"><a href="../nhanvien/account/account_management.php">Quản Lý Nhân Viên</a></div>
-    <div class="box"><a href="../thongke/ThongKe.php">Thống Kê</a></div>
+    <div class="box"><a href="donthuoc/DonThuoc.php">Quản lý Đơn Thuốc</a></div>
+    <div class="box"><a href="thuoc/index.php">Quản lý Thuốc </a></div>
+
 </div>
 
 </body>

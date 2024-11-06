@@ -42,6 +42,16 @@
             font-size: 16px;
             transition: background-color 0.3s;
         }
+        .navbar .btn-succes {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
         .navbar .logout-btn:hover {
             background-color: #e60000;
         }
@@ -58,7 +68,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #4CAF50;
+            background-color:sandybrown;
             color: white;
             font-size: 18px;
             text-align: center;
@@ -92,22 +102,62 @@ if (!isset($_SESSION['username'])) {
     exit();
 }
 ?>
-?>
 <!-- Navbar -->
 <div class="navbar">
     <div class="title">Quản Lý Phòng Khám Nhi</div>
-    <button class="logout-btn" onclick="window.location.href='../logout.php'">Đăng Xuất</button>
+    <div>
+        <button class="btn-succes" onclick="window.location.href='../home/home.php'">Quay lại</button>
+        <button class="logout-btn" onclick="window.location.href='../logout.php'">Đăng Xuất</button>
+    
+    </div>
+    
 </div>
 
 <!-- Main Content with Management Boxes -->
+ Nhi
 <div class="container">
     
-    <div class="box"><a href="quanly_khambenh.php">Quản Lý Khám Bệnh</a></div>
-    <div class="box"><a href="../thuoc/index.php">Quản Lý Thuốc</a></div>
-    <div class="box"><a href="../donthuoc/DonThuoc.php">Quản Lý Đơn Thuốc</a></div>
-    <div class="box"><a href="../nhanvien/QLNhanVien.php">Quản Lý Nhân Viên</a></div>
-    <div class="box"><a href="../thongke/ThongKe.php">Thống Kê</a></div>
+    <div class="box"><a href="Nhi/view_thongtinbennhan.php">Hiển thị thông tin, kết quả xét nghiệm và đơn thuốc (view)</a></div>
+    <div class="box"><a href="Nhi/ham_doanhthu.php">Doanh thu một ngày (hàm)</a></div>
+    <div class="box"><a href="Nhi/thutuc_cacloaixn.php">Thông tin các loại xét nghiệm và số lần thực hiện xét nghiệm (thủ tục)</a></div>
+
 </div>
+Phước
+<div class="container">
+    
+    <div class="box"><a href="Phuoc/thongkekedon_ham.php">Thống kê đơn (Hàm)</a></div>
+    <div class="box"><a href="Phuoc/thongkekedon_thutuc.php">Thống kê đơn (Thủ tục)</a></div>
+    <div class="box"><a href="Phuoc/thongkekedon.php">Thống kê đơn (view)</a></div>
+    
+</div>
+Quân
+<div class="container">
+    
+    <div class="box"><a href="Quan/view_doanhthutheothang.php">Doanh thu theo tháng(view)</a></div>
+    <div class="box"><a href="Quan/thutuc_doanhthutheonam.php">Doanh thu theo năm(Thủ tục)</a></div>
+    <div class="box"><a href="Quan/ham_tongtienthuoc.php">Tổng tiền thuốc (Hàm)</a></div>
+    
+</div>
+
+Sơn
+<div class="container">
+    
+    
+    <div class="box"><a href="Son/view.php">Phiếu thu (view)</a></div>
+    <div class="box"><a href="Son/procedure.php">Số lượng thuốc trong kho (Thủ tục)</a></div>
+    <div class="box"><a href="Son/function.php">Danh sách bệnh nhân đã tham gia xét nghiệm (Hàm) </a></div>
+</div>
+Thành
+<div class="container"> 
+    <div class="box"><a href="Thanh/view.php">Thống kê bệnh nhân (view)</a></div>
+    <div class="box"><a href="Thanh/procedure.php"> Tổng chi phí cho một phiếu khám bệnh (Thủ tục)</a></div>
+    <div class="box"><a href="Thanh/function.php"> Tiền xét nghiệm của một bệnh nhân (Hàm) </a></div>
+</div>
+
+
+
+
+
 
 </body>
 </html>

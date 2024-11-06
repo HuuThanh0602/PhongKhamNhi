@@ -1,19 +1,19 @@
 <?php
-session_start(); // Khởi động phiên
+session_start(); // Khởi động phiên làm việc
 
-// Kiểm tra xem người dùng đã đăng nhập hay chưa
+// Kiểm tra xem người dùng đã đăng nhập chưa
 if (!isset($_SESSION['username'])) {
     header("Location: ../index.php"); // Chuyển hướng về trang đăng nhập
     exit();
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">  
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prescription Management</title>
+    <title>Quản lý Đơn thuốc</title>
     <!-- Bootstrap CSS -->
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome CSS -->
@@ -23,14 +23,17 @@ if (!isset($_SESSION['username'])) {
 <body>
         
     <div class="container mt-5">
-        <h2 class="mb-4">Prescription Management</h2>
+        <h2 class="mb-4">Quản lý Đơn thuốc</h2>
         <!-- Nav tabs -->
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" id="prescription-tab" data-toggle="tab" href="#prescription" role="tab">Prescriptions</a>
+                <a class="nav-link active" id="prescription-tab" data-toggle="tab" href="#prescription" role="tab">Đơn thuốc</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" id="details-tab" data-toggle="tab" href="#details" role="tab">Prescription Details</a>
+                <a class="nav-link" id="details-tab" data-toggle="tab" href="#details" role="tab">Chi tiết Đơn thuốc</a>
+            </li>
+            <li>
+                <a class="btn-success" href="../index.php">Quay lại</a>
             </li>
         </ul>
 
@@ -38,10 +41,10 @@ if (!isset($_SESSION['username'])) {
         <div class="tab-content mt-3">
             <!-- Prescription List -->
             <div class="tab-pane fade show active" id="prescription" role="tabpanel">
-                <h3>Prescription List</h3>
+                <h3>Danh sách Đơn thuốc</h3>
                 <form method="GET" action="" class="form-inline mb-3">
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Search by ID" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        <input type="text" name="search" class="form-control" placeholder="Tìm kiếm theo Mã" value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                         <div class="input-group-append">
                             <button class="btn btn-primary" type="submit">
                                 <i class="fas fa-search"></i>
@@ -49,19 +52,19 @@ if (!isset($_SESSION['username'])) {
                         </div>
                     </div>
                 </form>
-                <a href="add_prescription.php" class="btn btn-primary mb-3">Add New Prescription</a>
+                <a href="add_prescription.php" class="btn btn-primary mb-3">Thêm Đơn thuốc mới</a>
                 <table class="table table-striped table-bordered">
                     <thead class="thead-dark">
                         <tr>
-                            <th>Prescription ID</th>
-                            <th>Examination ID</th>
-                            <th>Actions</th>
+                            <th>Mã Đơn thuốc</th>
+                            <th>Mã Phiếu khám</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php
                         // Kết nối đến cơ sở dữ liệu và lấy dữ liệu đơn thuốc
-                        require_once '../Database/DBConnection.php';
+                        require_once '../../Database/DBConnection.php';
                         $db = new DBConnection();
                         $conn = $db->connect();
 
@@ -81,8 +84,8 @@ if (!isset($_SESSION['username'])) {
                                 <td>" . htmlspecialchars(trim($prescription['MaDon'])) . "</td>
                                 <td>" . htmlspecialchars(trim($prescription['MaPhieuKham'])) . "</td>
                                 <td>
-                                    <a href='edit_prescription.php?id=" . urlencode(trim($prescription['MaDon'])) . "' class='btn btn-warning btn-sm'>Edit</a>
-                                    <a href='delete_prescription.php?id=" . urlencode(trim($prescription['MaDon'])) . "' class='btn btn-danger btn-sm' onclick='return confirm(\"Are you sure?\")'>Delete</a>
+                                    <a href='edit_prescription.php?id=" . urlencode(trim($prescription['MaDon'])) . "' class='btn btn-warning btn-sm'>Chỉnh sửa</a>
+                                    <a href='delete_prescription.php?id=" . urlencode(trim($prescription['MaDon'])) . "' class='btn btn-danger btn-sm' onclick='return confirm(\"Bạn có chắc chắn không?\")'>Xóa</a>
                                 </td>
                             </tr>";
                         }
@@ -93,14 +96,14 @@ if (!isset($_SESSION['username'])) {
 
             <!-- Prescription Details -->
             <div class="tab-pane fade" id="details" role="tabpanel">
-                <h3>Prescription Details</h3>
+                <h3>Chi tiết Đơn thuốc</h3>
                 <table class="table table-striped table-bordered">
                     <thead class="thead-dark">
                         <tr>
-                            <th>Prescription ID</th>
-                            <th>Medicine ID</th>
-                            <th>Quantity</th>
-                            <th>Usage</th>
+                            <th>Mã Đơn thuốc</th>
+                            <th>Mã Thuốc</th>
+                            <th>Số lượng</th>
+                            <th>Cách sử dụng</th>
                         </tr>
                     </thead>
                     <tbody>

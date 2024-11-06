@@ -1,4 +1,4 @@
-<!-- employee_management.php -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -10,8 +10,34 @@
 </head>
 
 <body>
+<header>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary shadow p-3 mb-4 bg-white rounded">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center text-dark" href="../../home/home.php" style="color: black;">
+                <i class="bi bi-house-door me-2"></i>
+                Trang Chủ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="" style="color: black;"><strong>Quản Lý Nhân Viên</strong></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../QLLuong.php" style="color: black;">Quản Lý Lương</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold" href="../account/account_management.php" style="color: black;">Quản Lý Tài Khoản</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
     <div class="container mt-5">
-        <h2 class="mb-4">Quản lý nhân viên</h2>
+       
 
         <form method="GET" action="">
             <input type="text" name="search" class="form-control mb-3" placeholder="Tìm kiếm nhân viên..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
@@ -39,7 +65,7 @@
             </thead>
             <tbody>
                 <?php
-                require_once '../Database/DBConnection.php';
+                require_once '../../Database/DBConnection.php';
                 $db = new DBConnection();
                 $conn = $db->connect();
 
